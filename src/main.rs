@@ -7,10 +7,22 @@ fn main() {
     let size = dims[0]*dims[1];
     let mut array = vec![0u32; size as usize];
 
-    check_tile(&mut array);
     let grid = draw_grid(&mut array, &dims[0]);
-
     println!("{}", grid);
+
+    let mut count: u32 = 0;
+
+    loop {
+        count += 1;
+        check_tile(&mut array);
+        let grid = draw_grid(&mut array, &dims[0]);
+        println!("{}", grid);
+
+        if &count == &(&dims[0]*&dims[1]) {
+            break;
+        }
+    }
+
 }
 
 fn check_tile(array: &mut Vec<u32>) {
