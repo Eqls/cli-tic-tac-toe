@@ -4,7 +4,7 @@ use std::vec::Vec;
 
 fn main() {
     let dims = get_grid_size();
-    let size = dims[0]*dims[1];
+    let size = dims[0] * dims[1];
     let mut array = vec![0u32; size as usize];
 
     let grid = draw_grid(&mut array, &dims[0]);
@@ -16,13 +16,26 @@ fn main() {
         count += 1;
         check_tile(&mut array);
         let grid = draw_grid(&mut array, &dims[0]);
+        check_best_available_position(&mut array, dims[0], dims[1]);
         println!("{}", grid);
 
-        if &count == &(&dims[0]*&dims[1]) {
+        if &count == &(&dims[0] * &dims[1]) {
             break;
         }
     }
+}
 
+// TODO Computer player wip
+fn check_best_available_position(array: &mut Vec<u32>, x_size: u32, y_size: u32) {
+    for (i, value) in array.iter().enumerate() {
+        for x in 0..x_size {
+            println!("x = {}", x);
+        }
+
+        for y in 0..y_size {
+            println!("y = {}", y);
+        }
+    }
 }
 
 fn check_tile(array: &mut Vec<u32>) {
@@ -34,12 +47,15 @@ fn check_tile(array: &mut Vec<u32>) {
         .read_line(&mut position)
         .expect("Failed to read line");
 
-    let position: u32 = position.trim().parse().expect("Error while parsing position value");
+    let position: u32 = position
+        .trim()
+        .parse()
+        .expect("Error while parsing position value");
 
-    array[(position-1) as usize] = 1;
+    array[(position - 1) as usize] = 1;
 }
 
-fn draw_grid(array: & Vec<u32>, row_boundary: &u32) -> String {
+fn draw_grid(array: &Vec<u32>, row_boundary: &u32) -> String {
     let mut count: u32 = 0;
     let mut grid = String::new();
 
@@ -50,10 +66,9 @@ fn draw_grid(array: & Vec<u32>, row_boundary: &u32) -> String {
         }
 
         let str = match value {
-            0 => " ",
             1 => "x",
             2 => "o",
-            _ => "--"
+            _ => " ",
         };
 
         grid.push_str(format!("[{}]", str).as_str());
