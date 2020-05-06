@@ -3,21 +3,18 @@ use std::string::String;
 use std::vec::Vec;
 
 fn main() {
-    let dims = get_grid_size();
+    let dims = get_board_size();
     let size = dims[0] * dims[1];
-    let mut array = vec![0u32; size as usize];
+    let mut board = vec![0u32; size as usize];
 
-    let grid = draw_grid(&mut array, &dims[0]);
-    println!("{}", grid);
+    draw_grid(&mut board, &dims[0]);
 
     let mut count: u32 = 0;
 
     loop {
         count += 1;
-        check_tile(&mut array);
-        let grid = draw_grid(&mut array, &dims[0]);
-        check_best_available_position(&mut array, dims[0], dims[1]);
-        println!("{}", grid);
+        make_move(&mut board);
+        draw_grid(&mut board, &dims[0]);
 
         if &count == &(&dims[0] * &dims[1]) {
             break;
@@ -25,20 +22,7 @@ fn main() {
     }
 }
 
-// TODO Computer player wip
-fn check_best_available_position(array: &mut Vec<u32>, x_size: u32, y_size: u32) {
-    for (i, value) in array.iter().enumerate() {
-        for x in 0..x_size {
-            println!("x = {}", x);
-        }
-
-        for y in 0..y_size {
-            println!("y = {}", y);
-        }
-    }
-}
-
-fn check_tile(array: &mut Vec<u32>) {
+fn make_move(board: &mut Vec<u32>) {
     println!("Please input your a position number that you want to check");
 
     let mut position = String::new();
@@ -52,14 +36,31 @@ fn check_tile(array: &mut Vec<u32>) {
         .parse()
         .expect("Error while parsing position value");
 
-    array[(position - 1) as usize] = 1;
+    board[(position - 1) as usize] = 1;
 }
 
-fn draw_grid(array: &Vec<u32>, row_boundary: &u32) -> String {
+fn get_board_size() -> Vec<u32> {
+    println!("Please input your a grid size. For ex.: 3x3.");
+
+    let mut grid_size = String::new();
+
+    io::stdin()
+        .read_line(&mut grid_size)
+        .expect("Failed to read line");
+
+    let tokens: Vec<u32> = grid_size
+        .split("x")
+        .map(|s| s.trim().parse().unwrap())
+        .collect();
+
+    tokens
+}
+
+fn draw_grid(board: &Vec<u32>, row_boundary: &u32) {
     let mut count: u32 = 0;
     let mut grid = String::new();
 
-    for value in array {
+    for value in board {
         if &count == row_boundary {
             count = 0;
             grid.push_str("\n")
@@ -75,22 +76,5 @@ fn draw_grid(array: &Vec<u32>, row_boundary: &u32) -> String {
         count += 1;
     }
 
-    grid
-}
-
-fn get_grid_size() -> Vec<u32> {
-    println!("Please input your a grid size. For ex.: 3x3.");
-
-    let mut grid_size = String::new();
-
-    io::stdin()
-        .read_line(&mut grid_size)
-        .expect("Failed to read line");
-
-    let tokens: Vec<u32> = grid_size
-        .split("x")
-        .map(|s| s.trim().parse().unwrap())
-        .collect();
-
-    tokens
+    println!("{}", grid);
 }
