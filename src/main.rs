@@ -26,6 +26,7 @@ fn main() {
     }
 }
 
+// TODO: seperate checkers to their own functions;
 fn check_winner(board: &Vec<u32>, size: u32) -> bool {
     for i in 0..size {
         let mut matched_column = 0;
@@ -51,7 +52,7 @@ fn check_winner(board: &Vec<u32>, size: u32) -> bool {
         let mut sum = index;
         if *value == 1 {
             for _i in 0..size {
-                if board.len() >= sum && board[sum as usize] == 1 {
+                if board.len() - 1 >= sum && board[sum as usize] == 1 {
                     matched_diagnal += 1;
                 }
                 sum += (size + 1) as usize;
