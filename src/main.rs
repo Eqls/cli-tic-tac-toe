@@ -3,21 +3,41 @@ use std::string::String;
 use std::vec::Vec;
 
 fn main() {
-    let dims = get_board_size();
-    let size = dims[0] * dims[1];
+    let dim = get_board_size();
+    let size = dim * dim;
     let mut board = vec![0u32; size as usize];
 
-    draw_grid(&mut board, &dims[0]);
+    draw_grid(&mut board, &dim);
 
     let mut count: u32 = 0;
 
     loop {
         count += 1;
         make_move(&mut board);
-        draw_grid(&mut board, &dims[0]);
-
-        if &count == &(&dims[0] * &dims[1]) {
+        draw_grid(&mut board, &dim);
+        check_winner(&board, dim);
+        if &count == &(&dim * &dim) {
             break;
+        }
+    }
+}
+
+fn check_winner(board: &Vec<u32>, size: u32) {
+    for i in 0..size {
+        let mut matched_column = 0;
+        let mut matched_row = 0;
+
+        for j in 0..size {
+            if board[(i * size + j) as usize] == 1 {
+                matched_row += 1;
+            }
+
+            if board[(j * size + i) as usize] == 1 {
+                matched_column += 1;
+            }
+        }
+        if matched_row == 3 || matched_column == 3 {
+            println!("Winner")
         }
     }
 }
@@ -39,8 +59,8 @@ fn make_move(board: &mut Vec<u32>) {
     board[(position - 1) as usize] = 1;
 }
 
-fn get_board_size() -> Vec<u32> {
-    println!("Please input your a grid size. For ex.: 3x3.");
+fn get_board_size() -> u32 {
+    println!("Please input your a board size.");
 
     let mut grid_size = String::new();
 
@@ -48,12 +68,9 @@ fn get_board_size() -> Vec<u32> {
         .read_line(&mut grid_size)
         .expect("Failed to read line");
 
-    let tokens: Vec<u32> = grid_size
-        .split("x")
-        .map(|s| s.trim().parse().unwrap())
-        .collect();
+    let token: u32 = grid_size.trim().parse().expect("It's not a number.");
 
-    tokens
+    token
 }
 
 fn draw_grid(board: &Vec<u32>, row_boundary: &u32) {
