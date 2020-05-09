@@ -15,14 +15,18 @@ fn main() {
         count += 1;
         make_move(&mut board);
         draw_grid(&mut board, &dim);
-        check_winner(&board, dim);
+        let have_winner = check_winner(&board, dim);
+        if have_winner {
+            println!("Winner winner chicken dinner!");
+            break;
+        }
         if &count == &(&dim * &dim) {
             break;
         }
     }
 }
 
-fn check_winner(board: &Vec<u32>, size: u32) {
+fn check_winner(board: &Vec<u32>, size: u32) -> bool {
     for i in 0..size {
         let mut matched_column = 0;
         let mut matched_row = 0;
@@ -36,10 +40,30 @@ fn check_winner(board: &Vec<u32>, size: u32) {
                 matched_column += 1;
             }
         }
+
         if matched_row == 3 || matched_column == 3 {
-            println!("Winner")
+            return true;
         }
     }
+
+    for (index, value) in board.iter().enumerate() {
+        let mut matched_diagnal = 0;
+        let mut sum = index;
+        if *value == 1 {
+            for _i in 0..size {
+                if board.len() >= sum && board[sum as usize] == 1 {
+                    matched_diagnal += 1;
+                }
+                sum += (size + 1) as usize;
+            }
+        }
+
+        if matched_diagnal == 3 {
+            return true;
+        }
+    }
+
+    false
 }
 
 fn make_move(board: &mut Vec<u32>) {
