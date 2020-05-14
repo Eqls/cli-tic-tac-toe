@@ -2,41 +2,47 @@ use std::io;
 use std::string::String;
 use std::vec::Vec;
 
+#[derive(Copy, Clone, PartialEq, Debug)]
+enum SlotTypes {
+    X,
+    O,
+    Empty,
+}
+
 fn main() {
     let dim = get_board_size();
     let size = dim * dim;
-    let mut board = vec![0u32; size as usize];
+    let mut board: Vec<SlotTypes> = vec![SlotTypes::Empty; size as usize];
 
     draw_grid(&mut board, &dim);
 
-    let mut count: u32 = 0;
-
     loop {
-        count += 1;
-        make_move_human(&mut board);
-        let (_, pos) = minimax(&board, dim, true, 2);
-        board[pos as usize] = 2;
+        make_move_human(&mut board, SlotTypes::X);
+        let (_, pos) = minimax(&board, dim, true, SlotTypes::O);
         println!("{}", pos);
         draw_grid(&mut board, &dim);
         let winner = check_winner(&board, dim);
-        if winner == 1 {
+        if winner == SlotTypes::X {
             println!("You won!");
             break;
-        } else if winner == 2 {
+        } else if winner == SlotTypes::O {
             println!("You lost!");
             break;
         }
-        if &count == &(&dim * &dim) {
+
+        let no_empty_slots = board.iter().all(|ref v| v == &&SlotTypes::Empty);
+
+        if no_empty_slots {
             break;
         }
     }
 }
 
 // TODO: seperate checkers to their own functions;
-fn check_winner(board: &Vec<u32>, size: u32) -> u32 {
+fn check_winner(board: &Vec<SlotTypes>, size: u32) -> SlotTypes {
     for i in 0..size {
-        let mut column_values = vec![0u32; size as usize];
-        let mut row_values = vec![0u32; size as usize];
+        let mut column_values = vec![SlotTypes::Empty; size as usize];
+        let mut row_values = vec![SlotTypes::Empty; size as usize];
 
         for j in 0..size {
             row_values[j as usize] = board[(i * size + j) as usize];
@@ -45,10 +51,10 @@ fn check_winner(board: &Vec<u32>, size: u32) -> u32 {
 
         let row_contains_same_vals = row_values
             .iter()
-            .all(|ref v| v == &&row_values[0] && v != &&0);
+            .all(|ref v| v == &&row_values[0] && v != &&SlotTypes::Empty);
         let columns_contains_same_vals = column_values
             .iter()
-            .all(|ref v| v == &&column_values[0] && v != &&0);
+            .all(|ref v| v == &&column_values[0] && v != &&SlotTypes::Empty);
 
         if row_contains_same_vals {
             return row_values[0];
@@ -59,9 +65,9 @@ fn check_winner(board: &Vec<u32>, size: u32) -> u32 {
     }
 
     for (index, value) in board.iter().enumerate() {
-        let mut diagnal_values = vec![0u32; size as usize];
+        let mut diagnal_values = vec![SlotTypes::Empty; size as usize];
         let mut sum = index;
-        if *value != 0 {
+        if *value != SlotTypes::Empty {
             for i in 0..size {
                 if board.len() - 1 >= sum {
                     diagnal_values[i as usize] = board[sum as usize];
@@ -72,17 +78,22 @@ fn check_winner(board: &Vec<u32>, size: u32) -> u32 {
 
         let diagnal_contains_same_vals = diagnal_values
             .iter()
-            .all(|ref v| v == &&diagnal_values[0] && v != &&0);
+            .all(|ref v| v == &&diagnal_values[0] && v != &&SlotTypes::Empty);
 
         if diagnal_contains_same_vals {
             return diagnal_values[0];
         }
     }
 
-    0
+    SlotTypes::Empty
 }
 
-fn minimax(board: &Vec<u32>, size: u32, is_maximizing: bool, player: u32) -> (i32, u32) {
+fn minimax(
+    board: &Vec<SlotTypes>,
+    size: u32,
+    is_maximizing: bool,
+    player: SlotTypes,
+) -> (i32, u32) {
     let mut winning_position = 0;
     if check_winner(&board, size) > 0 {
         return (1, winning_position);
@@ -91,9 +102,9 @@ fn minimax(board: &Vec<u32>, size: u32, is_maximizing: bool, player: u32) -> (i3
     let mut board_clone = board.clone();
     let mut score = 0;
     for i in 0..board_clone.len() {
-        println!("{} {}", board_clone[i], i);
-        if board_clone[i] == 0 {
-            board_clone[i] = 2;
+        println!("{:?} {}", board_clone[i], i);
+        if board_clone[i] == SlotTypes::Empty {
+            board_clone[i] = player;
             let (mut best_score, _) = minimax(
                 &board_clone,
                 size,
@@ -115,9 +126,9 @@ fn minimax(board: &Vec<u32>, size: u32, is_maximizing: bool, player: u32) -> (i3
     (score, winning_position)
 }
 
-fn make_smart_move(board: &mut Vec<u32>) {}
+fn make_smart_move(board: &mut Vec<SlotTypes>) {}
 
-fn make_move_human(board: &mut Vec<u32>) {
+fn make_move_human(board: &mut Vec<SlotTypes>, player: SlotTypes) {
     println!("Please input your a position number that you want to check");
 
     let mut position = String::new();
@@ -131,7 +142,7 @@ fn make_move_human(board: &mut Vec<u32>) {
         .parse()
         .expect("Error while parsing position value");
 
-    board[(position - 1) as usize] = 1;
+    board[(position - 1) as usize] = player;
 }
 
 fn get_board_size() -> u32 {
@@ -148,7 +159,7 @@ fn get_board_size() -> u32 {
     token
 }
 
-fn draw_grid(board: &Vec<u32>, row_boundary: &u32) {
+fn draw_grid(board: &Vec<SlotTypes>, row_boundary: &u32) {
     let mut count: u32 = 0;
     let mut grid = String::new();
 
@@ -159,9 +170,9 @@ fn draw_grid(board: &Vec<u32>, row_boundary: &u32) {
         }
 
         let str = match value {
-            1 => "x",
-            2 => "o",
-            _ => " ",
+            SlotTypes::X => "x",
+            SlotTypes::O => "o",
+            SlotTypes::Empty => " ",
         };
 
         grid.push_str(format!("[{}]", str).as_str());
