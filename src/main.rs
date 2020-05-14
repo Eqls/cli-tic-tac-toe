@@ -18,9 +18,12 @@ fn main() {
         board[pos as usize] = 2;
         println!("{}", pos);
         draw_grid(&mut board, &dim);
-        let have_winner = check_winner(&board, dim, 1) || check_winner(&board, dim, 2);
-        if have_winner {
-            println!("Winner winner chicken dinner!");
+        let winner = check_winner(&board, dim);
+        if winner == 1 {
+            println!("You won!");
+            break;
+        } else if winner == 2 {
+            println!("You lost!");
             break;
         }
         if &count == &(&dim * &dim) {
@@ -30,55 +33,65 @@ fn main() {
 }
 
 // TODO: seperate checkers to their own functions;
-fn check_winner(board: &Vec<u32>, size: u32, player: u32) -> bool {
+fn check_winner(board: &Vec<u32>, size: u32) -> u32 {
     for i in 0..size {
-        let mut matched_column = 0;
-        let mut matched_row = 0;
+        let mut column_values = vec![0u32; size as usize];
+        let mut row_values = vec![0u32; size as usize];
 
         for j in 0..size {
-            if board[(i * size + j) as usize] == player {
-                matched_row += 1;
-            }
-
-            if board[(j * size + i) as usize] == player {
-                matched_column += 1;
-            }
+            row_values[j as usize] = board[(i * size + j) as usize];
+            column_values[j as usize] = board[(j * size + i) as usize];
         }
 
-        if matched_row == size || matched_column == size {
-            return true;
+        let row_contains_same_vals = row_values
+            .iter()
+            .all(|ref v| v == &&row_values[0] && v != &&0);
+        let columns_contains_same_vals = column_values
+            .iter()
+            .all(|ref v| v == &&column_values[0] && v != &&0);
+
+        if row_contains_same_vals {
+            return row_values[0];
+        }
+        if columns_contains_same_vals {
+            return column_values[0];
         }
     }
 
     for (index, value) in board.iter().enumerate() {
-        let mut matched_diagnal = 0;
+        let mut diagnal_values = vec![0u32; size as usize];
         let mut sum = index;
-        if *value == 1 {
-            for _i in 0..size {
-                if board.len() - 1 >= sum && board[sum as usize] == player {
-                    matched_diagnal += 1;
+        if *value != 0 {
+            for i in 0..size {
+                if board.len() - 1 >= sum {
+                    diagnal_values[i as usize] = board[sum as usize];
                 }
                 sum += (size + 1) as usize;
             }
         }
 
-        if matched_diagnal == size {
-            return true;
+        let diagnal_contains_same_vals = diagnal_values
+            .iter()
+            .all(|ref v| v == &&diagnal_values[0] && v != &&0);
+
+        if diagnal_contains_same_vals {
+            return diagnal_values[0];
         }
     }
 
-    false
+    0
 }
 
 fn minimax(board: &Vec<u32>, size: u32, is_maximizing: bool, player: u32) -> (i32, u32) {
     let mut winning_position = 0;
-    if check_winner(&board, size, player) {
+    if check_winner(&board, size) > 0 {
         return (1, winning_position);
     }
 
     let mut board_clone = board.clone();
     let mut score = 0;
     for i in 0..board_clone.len() {
+        println!("{} {}", board_clone[i], i);
         if board_clone[i] == 0 {
             board_clone[i] = 2;
             let (mut best_score, _) = minimax(
