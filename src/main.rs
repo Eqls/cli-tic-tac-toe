@@ -18,8 +18,7 @@ fn main() {
 
     loop {
         make_move_human(&mut board, SlotTypes::X);
-        let (_, pos) = minimax(&board, dim, true, SlotTypes::O);
-        println!("{}", pos);
+        make_smart_move(&mut board, dim, SlotTypes::O);
         draw_grid(&mut board, &dim);
         let winner = check_winner(&board, dim);
         if winner == SlotTypes::X {
@@ -95,7 +94,7 @@ fn minimax(
     player: SlotTypes,
 ) -> (i32, u32) {
     let mut winning_position = 0;
-    if check_winner(&board, size) > 0 {
+    if check_winner(&board, size) != SlotTypes::Empty {
         return (1, winning_position);
     }
 
@@ -126,7 +125,10 @@ fn minimax(
     (score, winning_position)
 }
 
-fn make_smart_move(board: &mut Vec<SlotTypes>) {}
+fn make_smart_move(board: &mut Vec<SlotTypes>, size: u32, player: SlotTypes) {
+    let (_, pos) = minimax(&board, size, true, player);
+    board[pos as usize] = player;
+}
 
 fn make_move_human(board: &mut Vec<SlotTypes>, player: SlotTypes) {
     println!("Please input your a position number that you want to check");
