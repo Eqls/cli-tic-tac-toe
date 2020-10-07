@@ -1,33 +1,32 @@
 use std::io;
 use std::string::String;
-use std::vec::Vec;
-
-#[derive(Copy, Clone, PartialEq, Debug)]
-enum SlotTypes {
-    X,
-    O,
-    Empty,
-}
+use utils::SlotTypes;
+use board::Board;
 
 fn main() {
     let dim = get_board_size();
-    let size = dim * dim;
-    let mut board: Vec<SlotTypes> = vec![SlotTypes::Empty; size as usize];
+    let length = dim * dim;
+    let board = Board {
+        grid: vec![SlotTypes::Empty; length as usize],
+        dim: get_board_size()
+    };
 
-    draw_grid(&mut board, &dim);
+    draw_grid(&board.grid, &dim);
 
     loop {
-        make_move_human(&mut board, SlotTypes::X);
-        make_smart_move(&mut board, dim, SlotTypes::O);
-        draw_grid(&mut board, &dim);
+        make_move_human(&board, SlotTypes::X);
         let winner = check_winner(&board, dim);
         if winner == SlotTypes::X {
+            draw_grid(&board, &dim);
             println!("You won!");
             break;
         } else if winner == SlotTypes::O {
+            draw_grid(&mut board, &dim);
             println!("You lost!");
             break;
         }
+        // make_move_smart(&mut board, dim, SlotTypes::O);
+        draw_grid(&board, &dim);
 
         let no_empty_slots = board.iter().all(|ref v| v == &&SlotTypes::Empty);
 
@@ -37,100 +36,61 @@ fn main() {
     }
 }
 
-// TODO: seperate checkers to their own functions;
-fn check_winner(board: &Vec<SlotTypes>, size: u32) -> SlotTypes {
-    for i in 0..size {
-        let mut column_values = vec![SlotTypes::Empty; size as usize];
-        let mut row_values = vec![SlotTypes::Empty; size as usize];
+// fn opponent_for(player: SlotTypes) -> SlotTypes {
+//     if player == SlotTypes::X {
+//         return SlotTypes::X
+//     }
 
-        for j in 0..size {
-            row_values[j as usize] = board[(i * size + j) as usize];
-            column_values[j as usize] = board[(j * size + i) as usize];
-        }
+//     return SlotTypes::O;
+// }
 
-        let row_contains_same_vals = row_values
-            .iter()
-            .all(|ref v| v == &&row_values[0] && v != &&SlotTypes::Empty);
-        let columns_contains_same_vals = column_values
-            .iter()
-            .all(|ref v| v == &&column_values[0] && v != &&SlotTypes::Empty);
+// fn minimax(
+//     board: &Vec<SlotTypes>,
+//     size: u32,
+//     is_maximizing: bool,
+//     player: SlotTypes,
+// ) -> (i32, u32) {
+//     // let opponent_slot_type = if player == SlotTypes::X {
+//     //     SlotTypes::O
+//     // } else { SlotTypes::X };
+//     let mut winning_position = 0;
+//     if check_winner(&board, size) != SlotTypes::Empty {
+//         return (1, winning_position);
+//     }
 
-        if row_contains_same_vals {
-            return row_values[0];
-        }
-        if columns_contains_same_vals {
-            return column_values[0];
-        }
-    }
+//     let mut board_clone = board.clone();
+//     let mut score = 0;
+//     for i in 0..board_clone.len() {
+//         // println!("{:?} {}", board_clone[i], i);
+//         if board_clone[i] == SlotTypes::Empty {
+//             board_clone[i] = player;
+//             let (mut best_score, _) = minimax(
+//                 &board_clone,
+//                 size,
+//                 if is_maximizing { false } else { true },
+//                 if is_maximizing { player } else { opponent_for(player) },
+//             );
 
-    for (index, value) in board.iter().enumerate() {
-        let mut diagnal_values = vec![SlotTypes::Empty; size as usize];
-        let mut sum = index;
-        if *value != SlotTypes::Empty {
-            for i in 0..size {
-                if board.len() - 1 >= sum {
-                    diagnal_values[i as usize] = board[sum as usize];
-                }
-                sum += (size + 1) as usize;
-            }
-        }
+//             if !is_maximizing {
+//                 best_score = -best_score;
+//             }
 
-        let diagnal_contains_same_vals = diagnal_values
-            .iter()
-            .all(|ref v| v == &&diagnal_values[0] && v != &&SlotTypes::Empty);
+//             if best_score > score {
+//                 score = best_score;
+//                 winning_position = i as u32;
+//             }
+//         }
+//     }
 
-        if diagnal_contains_same_vals {
-            return diagnal_values[0];
-        }
-    }
+//     (score, winning_position)
+// }
 
-    SlotTypes::Empty
-}
+// fn make_move_smart(board: &Board, size: u32, player: SlotTypes) {
+//     let (_, pos) = minimax(&board, size, true, player);
+//     board.move(player, pos)
+// }
 
-fn minimax(
-    board: &Vec<SlotTypes>,
-    size: u32,
-    is_maximizing: bool,
-    player: SlotTypes,
-) -> (i32, u32) {
-    let mut winning_position = 0;
-    if check_winner(&board, size) != SlotTypes::Empty {
-        return (1, winning_position);
-    }
-
-    let mut board_clone = board.clone();
-    let mut score = 0;
-    for i in 0..board_clone.len() {
-        println!("{:?} {}", board_clone[i], i);
-        if board_clone[i] == SlotTypes::Empty {
-            board_clone[i] = player;
-            let (mut best_score, _) = minimax(
-                &board_clone,
-                size,
-                if is_maximizing { false } else { true },
-                player,
-            );
-
-            if !is_maximizing {
-                best_score = -best_score;
-            }
-
-            if best_score > score {
-                score = best_score;
-                winning_position = i as u32;
-            }
-        }
-    }
-
-    (score, winning_position)
-}
-
-fn make_smart_move(board: &mut Vec<SlotTypes>, size: u32, player: SlotTypes) {
-    let (_, pos) = minimax(&board, size, true, player);
-    board[pos as usize] = player;
-}
-
-fn make_move_human(board: &mut Vec<SlotTypes>, player: SlotTypes) {
+fn make_move_human(board: &Board, player: SlotTypes) {
     println!("Please input your a position number that you want to check");
 
     let mut position = String::new();
@@ -144,7 +104,7 @@ fn make_move_human(board: &mut Vec<SlotTypes>, player: SlotTypes) {
         .parse()
         .expect("Error while parsing position value");
 
-    board[(position - 1) as usize] = player;
+    board.make_move(player, position - 1)
 }
 
 fn get_board_size() -> u32 {
@@ -161,7 +121,7 @@ fn get_board_size() -> u32 {
     token
 }
 
-fn draw_grid(board: &Vec<SlotTypes>, row_boundary: &u32) {
+fn draw_grid(board: &Board, row_boundary: &u32) {
     let mut count: u32 = 0;
     let mut grid = String::new();
 
